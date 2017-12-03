@@ -1806,7 +1806,10 @@ void CWriter::generateHeader(Module &M) {
   Out << "#include <limits.h>\n";      // With overflow intrinsics support.
   Out << "#include <stdint.h>\n";      // Sized integer support
   Out << "#include <math.h>\n";        // definitions for some math functions and numeric constants
-  Out << "#include <APInt-C.h>\n";     // Implementations of many llvm intrinsics
+  Out << "// NOTE(growly): Removed for UCB-HLS.\n";
+  Out << "//#include <APInt-C.h>\n";     // Implementations of many llvm intrinsics
+  Out << "// NOTE(growly): Added for UCB-HLS.\n";
+  Out << "#include <pthread.h>\n";
   // Provide a definition for `bool' if not compiling with a C++ compiler.
   Out << "#ifndef __cplusplus\ntypedef unsigned char bool;\n#endif\n";
   Out << "\n";
