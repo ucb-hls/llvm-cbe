@@ -1810,6 +1810,8 @@ void CWriter::generateHeader(Module &M) {
   Out << "//#include <APInt-C.h>\n";     // Implementations of many llvm intrinsics
   Out << "// NOTE(growly): Added for UCB-HLS.\n";
   Out << "#include <pthread.h>\n";
+  Out << "#include <stdio.h>\n";
+  Out << "#include \"legup/streaming.h\"\n";
   // Provide a definition for `bool' if not compiling with a C++ compiler.
   Out << "#ifndef __cplusplus\ntypedef unsigned char bool;\n#endif\n";
   Out << "\n";
@@ -1963,6 +1965,20 @@ void CWriter::generateHeader(Module &M) {
         I->getName() == "_chkstk" ||
         I->getName() == "__chkstk" ||
         I->getName() == "___chkstk_ms")
+      continue;
+
+      // Skip Pthread/Legup defined functions
+      if (I->getName() == "pthread_create" ||
+        I->getName() == "pthread_exit" ||
+        I->getName() == "fifo_malloc" ||
+        I->getName() == "fifo_clone" ||
+        I->getName() == "fifo_malloc_name" ||
+        I->getName() == "fifo_write" ||
+        I->getName() == "fifo_read" ||
+        I->getName() == "fifo_read_nb" ||
+        I->getName() == "fifo_empty" ||
+        I->getName() == "fifo_elements" ||
+        I->getName() == "fifo_free")
       continue;
 
     if (I->hasDLLImportStorageClass())
