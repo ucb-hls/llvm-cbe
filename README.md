@@ -1,3 +1,29 @@
+# UCB-HLS BUILD NOTES
+
+* Clone our llvm fork
+* Checkout branch `release_37`
+* Copy in the clang 3.7.0 release source from the tarball to tools/clang
+* Clone this repo into the `projects` directory
+
+```
+export TOP=$(pwd)
+wget http://releases.llvm.org/3.7.0/cfe-3.7.0.src.tar.xz
+git clone git@github.com:ucb-hls/llvm.git llvm-37
+export LLVM_37=${TOP}/llvm-37
+cd ${LLVM_37}
+git checkout release_37
+cd tools
+tar -xvf ${TOP}/cfe-3.7.0.src.tar.xz
+mv cfe-3.7.0.src clang
+cd ../projects
+git clone git@github.com:ucb-hls/llvm-cbe.git
+cd ${TOP}
+mkdir llvm-37-build
+cd !$
+cmake -GNinja $LLVM_37}
+ninja
+```
+
 llvm-cbe
 ========
 
