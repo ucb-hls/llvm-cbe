@@ -1878,9 +1878,12 @@ void CWriter::generateHeader(Module &M) {
       else if (I->hasDLLExportStorageClass())
         Out << "__declspec(dllexport) ";
 
+      
+      // JENNY: temp fix for the extern __go_type_hash_*descriptors
       if (I->hasExternalLinkage() || I->hasExternalWeakLinkage() ||
           I->hasCommonLinkage())
-        Out << "extern ";
+        ;
+        //Out << "extern ";
       else
         continue; // Internal Global
 
