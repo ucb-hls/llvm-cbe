@@ -239,8 +239,11 @@ CWriter::printTypeString(raw_ostream &Out, Type *Ty, bool isSigned) {
 
 std::string CWriter::getStructName(StructType *ST) {
   assert(ST->getNumElements() != 0);
-  if (!ST->isLiteral() && !ST->getName().empty())
+  if (!ST->isLiteral() && !ST->getName().empty()) {
+    if (CBEMangle(ST->getName()) == "FIFO")
+      return "FIFO";
     return "struct l_struct_" + CBEMangle(ST->getName().str());
+  }
 
   unsigned &id = UnnamedStructIDs[ST];
   if (id == 0)
@@ -365,8 +368,14 @@ raw_ostream &CWriter::printTypeName(raw_ostream &Out, Type *Ty, bool isSigned, s
       return printSimpleType(Out, Ty, isSigned);
   }
 
-  if (isEmptyType(Ty))
+  if (isEmptyType(Ty)) {
+    if (StructType *STy = dyn_cast<StructType>(Ty)) {
+      if (!STy->isLiteral() && !STy->getName().empty())
+        if (CBEMangle(STy->getName()) == "FIFO")
+          return Out << "FIFO";
+    }
     return Out << "void";
+  }
 
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
@@ -415,7 +424,11 @@ raw_ostream &CWriter::printTypeNameUnaligned(raw_ostream &Out, Type *Ty, bool is
 raw_ostream &CWriter::printStructDeclaration(raw_ostream &Out, StructType *STy) {
   if (STy->isPacked())
     Out << "#ifdef _MSC_VER\n#pragma pack(push, 1)\n#endif\n";
-  Out << getStructName(STy) << " {\n";
+  std::string structName = getStructName(STy);
+  // Do not print out the declaration of FIFO type
+  if (structName == "FIFO")
+    return Out;
+  Out << structName << " {\n";
   unsigned Idx = 0;
   for (StructType::element_iterator I = STy->element_begin(),
          E = STy->element_end(); I != E; ++I, Idx++) {
@@ -2857,7 +2870,10 @@ void CWriter::forwardDeclareStructs(raw_ostream &Out, Type *Ty, std::set<Type*> 
   }
 
   if (StructType *ST = dyn_cast<StructType>(Ty)) {
-    Out << getStructName(ST) << ";\n";
+    std::string structName = getStructName(ST);
+    // Do not print out the declaration of FIFO type
+    if (structName != "FIFO")
+      Out << structName << ";\n";
   }
 }
 
