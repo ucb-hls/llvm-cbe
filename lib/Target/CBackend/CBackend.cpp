@@ -365,8 +365,15 @@ raw_ostream &CWriter::printTypeName(raw_ostream &Out, Type *Ty, bool isSigned, s
       return printSimpleType(Out, Ty, isSigned);
   }
 
-  if (isEmptyType(Ty))
+  if (isEmptyType(Ty)) {
+    // Uncomment the following 5 lines to keep FIFO empty struct
+    //if (StructType *STy = dyn_cast<StructType>(Ty)) {
+    //  std::string structName = getStructName(STy);
+    //  if (structName == "FIFO")
+    //    return Out;
+    //}
     return Out << "void";
+  }
 
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
@@ -416,7 +423,8 @@ raw_ostream &CWriter::printStructDeclaration(raw_ostream &Out, StructType *STy) 
   if (STy->isPacked())
     Out << "#ifdef _MSC_VER\n#pragma pack(push, 1)\n#endif\n";
   std::string structName = getStructName(STy);
-  if (getStructName(STy)== "FIFO")
+  // Do not print out the declaration of FIFO type
+  if (structName == "FIFO")
     return Out;
   Out << structName << " {\n";
   unsigned Idx = 0;
@@ -2821,6 +2829,7 @@ void CWriter::forwardDeclareStructs(raw_ostream &Out, Type *Ty, std::set<Type*> 
 
   if (StructType *ST = dyn_cast<StructType>(Ty)) {
     std::string structName = getStructName(ST);
+    // Do not print out the declaration of FIFO type
     if (structName != "FIFO")
       Out << structName << ";\n";
   }
