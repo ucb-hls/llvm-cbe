@@ -25,6 +25,9 @@
 #include <algorithm>
 #include <cstdio>
 
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Function.h"
 #include <iostream>
 
 //#include "Graph.h"
@@ -1722,6 +1725,40 @@ static void PrintEscapedString(const std::string &Str, raw_ostream &Out) {
   PrintEscapedString(Str.c_str(), Str.size(), Out);
 }
 
+
+void CWriter::generateMainWrapper(Module &M) {
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+
+    // main.main -> main wrapper 
+    if (I->getName() == "main.main"){
+      //auto Ctx = M.getContext();
+      //auto Ctx = I -> getContext();
+      llvm::LLVMContext& Ctx = llvm::getGlobalContext();
+
+      Type *Int32Ty = Type::getInt32Ty(Ctx);
+      //std::vector<llvm::Type *> ArgTypes;
+      //FunctionType* FTy = FunctionType::get(RetType, ArgTypes, I->getFunctionType()->isVarArg());
+      FunctionType* FTy = FunctionType::get(Int32Ty, I->getFunctionType()->isVarArg());
+   
+      Function * AccelWrapper = Function::Create(FTy, I->getLinkage(), "main", &M);
+      //Function* AccelWrapper = M.getOrInsertFunction("main", FTy, I->getLinkage());
+      AccelWrapper->copyAttributesFrom(I);
+      //AccelWrapper->setName("main");
+      BasicBlock * Entry = BasicBlock::Create(Ctx, "entry", AccelWrapper);
+
+      IRBuilder<> Builder(Entry);
+      llvm::SmallVector<Value *, 1> Args;
+      PointerType * Int8PtrTy = Type::getInt8PtrTy(Ctx);
+      Constant *ValuesPtrt = ConstantPointerNull::get(Int8PtrTy);
+      Args.push_back(ValuesPtrt);
+      Builder.CreateCall(I, Args);
+      Value *Result = ConstantInt::get(Type::getInt32Ty(Ctx), 0); 
+      Builder.CreateRet(Result);
+    }
+  }
+}
+
+
 bool CWriter::doInitialization(Module &M) {
   TheModule = &M;
 
@@ -1741,6 +1778,9 @@ bool CWriter::doInitialization(Module &M) {
   TAsm = new CBEMCAsmInfo();
   MRI  = new MCRegisterInfo();
   TCtx = new MCContext(TAsm, MRI, NULL);
+ 
+  generateMainWrapper(M);
+
   return false;
 }
 
@@ -1910,6 +1950,7 @@ void CWriter::generateHeader(Module &M) {
   // Function declarations
   Out << "\n/* Function Declarations */\n";
 
+
   // Store the intrinsics which will be declared/defined below.
   SmallVector<Function*, 16> intrinsicsToDefine;
 
@@ -2005,6 +2046,8 @@ void CWriter::generateHeader(Module &M) {
     if (I->hasHiddenVisibility())
       Out << " __HIDDEN__";
 
+
+    //errs() << "JENNY: getName "  << I->getName() << "\n"; 
     if (I->hasName() && I->getName()[0] == 1)
       Out << " __asm__ (\"" << I->getName().substr(1) << "\")";
 

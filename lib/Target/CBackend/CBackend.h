@@ -108,6 +108,7 @@ namespace {
 
   private:
 
+    void generateMainWrapper(Module &M);
     void generateHeader(Module &M);
     void declareOneGlobalVariable(GlobalVariable* I);
 
