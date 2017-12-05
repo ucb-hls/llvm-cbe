@@ -366,12 +366,11 @@ raw_ostream &CWriter::printTypeName(raw_ostream &Out, Type *Ty, bool isSigned, s
   }
 
   if (isEmptyType(Ty)) {
-    // Uncomment the following 5 lines to keep FIFO empty struct
-    //if (StructType *STy = dyn_cast<StructType>(Ty)) {
-    //  std::string structName = getStructName(STy);
-    //  if (structName == "FIFO")
-    //    return Out;
-    //}
+    if (StructType *STy = dyn_cast<StructType>(Ty)) {
+      if (!STy->isLiteral() && !STy->getName().empty())
+        if (CBEMangle(STy->getName()) == "FIFO")
+          return Out << "FIFO";
+    }
     return Out << "void";
   }
 
