@@ -3035,7 +3035,7 @@ void CWriter::printBasicBlock(BasicBlock *BB) {
       break;
     }
 
-  if (NeedsLabel) Out << GetValueName(BB) << ":\n";
+  if (NeedsLabel) Out << GetValueName(BB) << ": {\n";
 
   // Output all of the instructions in the basic block...
   for (BasicBlock::iterator II = BB->begin(), E = --BB->end(); II != E;
@@ -3053,6 +3053,8 @@ void CWriter::printBasicBlock(BasicBlock *BB) {
 
   // Don't emit prefix or suffix for the terminator.
   visit(*BB->getTerminator());
+  if (NeedsLabel) Out << "}\n";
+
 }
 
 
